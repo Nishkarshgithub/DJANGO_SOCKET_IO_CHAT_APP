@@ -87,5 +87,6 @@ docs/_build/
 backend/settings.py
 #Read ME file
 /src/read_me.txt
+/db.sqlite3
 db.sqlite3
 /src/db.sqlite3
