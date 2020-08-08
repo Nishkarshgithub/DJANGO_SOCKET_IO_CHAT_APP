@@ -1,0 +1,17 @@
+.blur_container {
+    -webkit-filter: blur(5px);
+    -moz-filter: blur(5px);
+    -o-filter: blur(5px);
+    -ms-filter: blur(5px);
+    filter: blur(5px);
+    /* width: 100px; */
+    /* height: 100px; */
+    /* background-color: #ccc;  */
+}
+
+#blur_no_content {
+    position: absolute;
+    z-index: 1000;
+    margin-top: 8em;
+    margin-left: 18em;
+}

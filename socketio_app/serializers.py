@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import User, CHAT_DATA, CHAT_THREAD
 
 
-class USER_CUSTOM_DATASERIALIZER(serializers.ModelSerializer):
+class USER_DATA_SERIALIZER(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = "__all__"

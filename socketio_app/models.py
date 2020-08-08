@@ -1,5 +1,6 @@
 from django.db import models
-from .utils import RANDOM_STRING
+from .utils import RANDOM_STRING, RANDOM_PHOTO
+
 
 MESSAGE_TYPE = (
     ('sent', 'sent'),
@@ -11,14 +12,14 @@ class User(models.Model):
     full_name = models.CharField(max_length=128, blank=True, null=True)
     mobile = models.CharField(max_length=128, blank=True, null=True)
     description = models.CharField(max_length=10000, blank=True, null=True)
-    photo = models.ImageField(upload_to='users-image/%Y/%m/%d', max_length=80, 
-        blank=True, null=True)
+    photo = models.CharField(max_length=1000, blank=True, null=True)
     room_key = models.CharField(max_length=8, blank=True, null=True)
     is_logged = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
 
     def save(self, *args, **kwargs):
         self.room_key = RANDOM_STRING(8)
+        self.photo = RANDOM_PHOTO(self.full_name.split(' ')[0])
         super(User, self).save(*args, **kwargs)
 
     def __str__(self):
@@ -33,6 +34,7 @@ class CHAT_DATA(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     message = models.CharField(max_length=5000, blank=True, null=True)
     message_type = models.CharField(max_length=8, blank=True, null=True, choices=MESSAGE_TYPE)
+    is_read = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
