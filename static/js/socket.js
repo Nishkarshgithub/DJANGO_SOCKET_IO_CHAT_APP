@@ -2,7 +2,7 @@ var IS_AUTHENTICATED = sessionStorage.getItem("is_Authenticated");
 var SESSION_KEY = sessionStorage.getItem("session_key");
 
 window.onunload = function(){
-  LOGIN_FUNCTION();
+  LOGOUT_FUNCTION();
   sessionStorage.clear();
 }
 

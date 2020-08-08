@@ -80,18 +80,3 @@ def LIST_USER(sid, data):
         return sio.emit('ONLINE_USERS', { "users_list": USER_DATA_SERIALIZER(User.objects.filter(is_active=True, is_logged=True), many=True).data, "session_key": sid })
     return sio.emit('USER_ERROR', { "message": "Session key do not exist!", 
         'session_key': sid })
-
-
-# @sio.on('FETCH_MESSAGES')
-# def FETCH_MESSAGE(sid, data):
-#     chats = CHAT_THREAD.objects.filter(room_id=data['ROOM_KEY']).order_by('id').all()
-#     return sio.emit('MESSAGES_LIST', CHAT_THREAD_SERIALIZER(chats, many=True).data)
-
-
-# @sio.on('SEND_MESSAGE')
-# def SEND_MESSAGE(sid, data):
-#     created_by, created_for = GET_USER(data['room_key'])
-#     chat_data = CHAT_THREAD.objects.create(room_id=data['room_key'], 
-#         created_by=created_by, created_for=created_for, message=data['message'], 
-#         message_type='sent')
-#     return sio.emit('MESSAGE_SENDED', CHAT_THREAD_SERIALIZER(chat_data).data)
