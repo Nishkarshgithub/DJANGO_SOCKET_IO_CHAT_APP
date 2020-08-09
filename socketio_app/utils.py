@@ -29,3 +29,7 @@ def NEW_CHAT_CREATE(CURRENT_USER, TARGET_USER, MESSAGE):
     chat_data.save()
     return chat_data
 
+def DELETE_CHAT(CURRENT_USER, TARGET_USER):
+    from .models import CHAT_DATA
+    chat_data = CHAT_DATA.objects.filter(created_by=CURRENT_USER, created_for=TARGET_USER).update(is_active=False).all()
+    return chat_data

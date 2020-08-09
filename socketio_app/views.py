@@ -4,7 +4,7 @@ from django.shortcuts import render
 from .models import User, CHAT_DATA, CHAT_THREAD
 from .serializers import CHAT_DATA_SERIALIZER, USER_DATA_SERIALIZER, \
     CHAT_THREAD_SERIALIZER
-from .utils import CHAT_DATA, GET_USER, NEW_CHAT_CREATE
+from .utils import CHAT_DATA, GET_USER, NEW_CHAT_CREATE, DELETE_CHAT
 
 # TEMPLATE RENDERER
 def RENDER_CHAT_HOMEPAGE(request):
@@ -131,8 +131,10 @@ def BROADCAST_MESSAGE(sid, data):
 @sio.on('DELETE_MESSAGE')
 def DELETE_MESSAGE(sid, data):
     if sid == data['session_key']:
-        return sio.emit('DELETE_SUCCESS', { "message": '', 
-            'session_key': sid })
+        created_by, created_for = GET_USER(data['target_user'], data['full_name'])
+        DELETE_CHAT(created_by, created_for)
+        return sio.emit('DELETE_SUCCESS', { "message": 'All chat deleted successfully!', 
+            'session_key': sid, 'target_name': USER_DATA_SERIALIZER(created_for).data})
     return sio.emit('USER_ERROR', { "message": "Session key do not exist!", 
         'session_key': sid })
 

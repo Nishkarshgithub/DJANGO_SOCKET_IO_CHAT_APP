@@ -106,6 +106,16 @@ function SOCKET_CONNECT(){
       return;
     }
   });
+
+  socket.on('DELETE_SUCCESS', data => {
+    var SESSION_KEY = sessionStorage.getItem("session_key");
+    if (SESSION_KEY == data.session_key){
+      NOTIFICATION('success', data.message, 'topCenter');
+      FETCH_CHAT_DATA(data.target_name);
+      return;
+    }
+  });
+
 }
 
 // Login Function
@@ -310,7 +320,9 @@ function DELETE_CHAT(){
   var TARGET_USER_DATA = JSON.parse(sessionStorage.getItem("target_user_data"));
   var CURRENT_USER_DATA = JSON.parse(sessionStorage.getItem("user_data"));
   var SESSION_KEY = sessionStorage.getItem("session_key");
-
-  socket.emit('DELETE_MESSAGE', { 'session_key': SESSION_KEY, 'full_name': CURRENT_USER_DATA.full_name, 
+  setTimeout(() => {
+    socket.emit('DELETE_MESSAGE', { 'session_key': SESSION_KEY, 'full_name': CURRENT_USER_DATA.full_name, 
     'target_user': TARGET_USER_DATA.full_name });
+  }, 18000);
+  $('.ui.basic.modal').modal('hide');
 }
