@@ -97,15 +97,42 @@ def FETCH_CHAT_DATA(sid, data):
     return sio.emit('USER_ERROR', { "message": "Session key do not exist!", 
         'session_key': sid })
 
-# List All Users
+# Send message/chat
 @sio.on('SEND_NEW_MESSAGE')
 def SEND_NEW_MESSAGE(sid, data):
     if sid == data['session_key']:
         created_by, created_for = GET_USER(data['target_user'], data['full_name'])
+        if created_for.is_logged == False:
+            return sio.emit('USER_ERROR', { "message": "{0} is Offline!".format(created_for.full_name), 
+                'session_key': sid })
         data = NEW_CHAT_CREATE(created_by, created_for, data['message'])
         return sio.emit('NEW_CHAT_DATA', { "chat_data": CHAT_DATA_SERIALIZER(data).data, 
             "reciever": USER_DATA_SERIALIZER(created_for).data, 'sender': USER_DATA_SERIALIZER(created_by).data })
     return sio.emit('USER_ERROR', { "message": "Session key do not exist!", 
         'session_key': sid })
 
+# broadcast message/chat
+@sio.on('BROADCAST_MESSAGE')
+def BROADCAST_MESSAGE(sid, data):
+    if sid == data['session_key']:
+        USER_LIST = list(data['users_list'].split(","))
+        CURRENT_USER, MESSAGE = data['full_name'], data['message']
+        for i in range(len(USER_LIST)):
+            created_by, created_for = GET_USER(USER_LIST[i], CURRENT_USER)
+            data = NEW_CHAT_CREATE(created_by, created_for, MESSAGE)
+            sio.emit('NEW_CHAT_DATA', { "chat_data": CHAT_DATA_SERIALIZER(data).data, 
+                "reciever": USER_DATA_SERIALIZER(created_for).data, 'sender': USER_DATA_SERIALIZER(created_by).data })
+        return sio.emit('BROADCAST_SUCCESS', { "message": "Broadcast completed successfully!", 
+        'session_key': sid })
+    return sio.emit('USER_ERROR', { "message": "Session key do not exist!", 
+        'session_key': sid })
+
+# Delete all chat
+@sio.on('DELETE_MESSAGE')
+def DELETE_MESSAGE(sid, data):
+    if sid == data['session_key']:
+        return sio.emit('DELETE_SUCCESS', { "message": '', 
+            'session_key': sid })
+    return sio.emit('USER_ERROR', { "message": "Session key do not exist!", 
+        'session_key': sid })
 

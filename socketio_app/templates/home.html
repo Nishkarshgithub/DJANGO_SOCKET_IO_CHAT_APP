@@ -28,23 +28,30 @@
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css" />
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/noty/3.1.4/noty.css" />
     <link rel="stylesheet" href="{% static 'css/main.css' %}"/>
-    <!-- <link rel="stylesheet" href="{% static 'css/custom.css' %}"/> -->
   </head>
   <body>
     <div class="ui grid" style="padding: 10px; margin-left: 0">
-        <div class="four wide column">
-            <div class="ui raised very padded text segment">
+        <div class="four wide column" style="margin-top: 1em;">
+            <div class="ui raised very padded text segment" style="padding: 1em;">
                 <div>
-                    <h2 class="ui">Django Chat App</h2>
+                    <h2 class="ui">DJANGOSOCK</h2>
                     <hr>
                     <span class="inline field">
-                        <span id="username">Nishkarsh Gupta</span>
+                        <h4 id="username">Nishkarsh Gupta</h4>
                         <button onclick="LOGOUT_FUNCTION()" class="ui circular google plus icon button right floated" data-tooltip="Logout" data-position="right center">
                             <i class="power off icon"></i>
                         </button>
                     </span>
                 </div>
-                <h4 class="ui header">Online Users list <a href="#" onclick="RELOAD_ONLINE_USERLIST()"><i class="sync alternate icon" id="reload_list"></i></a></h4>
+                <h4 class="ui header"> 
+                    Online Users list 
+                    <a href="#" onclick="RELOAD_ONLINE_USERLIST()">
+                        <i class="sync alternate icon" id="reload_list"></i>
+                    </a>
+                </h4>
+                <button class="ui button tiny black" id="broadcast_button" data-tooltip="Broadcast to multiple users." data-position="right center">
+                    <i class="podcast icon"></i> Broadcast
+                </button>
                 <div class="ui middle aligned selection animated list" id="online_users">
                     <div class="item">
                       <img class="ui avatar image" src="https://joeschmoe.io/api/v1/helen">
@@ -62,6 +69,33 @@
                       <img class="ui avatar image" src="https://joeschmoe.io/api/v1/daniel">
                       <div class="content">
                         <div class="header">Daniel</div>
+                      </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="ui card">
+                    <div class="content">
+                      <img class="right floated mini ui image" src="https://joeschmoe.io/api/v1/daniel">
+                      <div class="header">
+                        Nishkarsh Gupta
+                      </div>
+                      <div class="meta">
+                        Creator of Djangosock
+                      </div>
+                      <div class="description">
+                        Technology Enthusiast 🌍🌎🌏| Programmer📱💻📲 | developer🤯@Algomeric | Blogger✒️@Medium
+                      </div>
+                    </div>
+                    <div class="extra content">
+                      <div class="ui two tiny buttons">
+                        <a href="https://github.com/Nishkarshgithub" target="#_blank" class="ui small black button">
+                            <i class="github icon"></i>
+                            Github
+                        </a>
+                        <a href="https://www.linkedin.com/in/nishkarshgupta/" target="#_blank"class="ui small linkedin button">
+                            <i class="linkedin icon"></i>
+                            Linkedin
+                        </a>
                       </div>
                     </div>
                 </div>
@@ -86,10 +120,10 @@
                     </div>
                 </div>
                 
-                <div class="ui comments scrolling content" id="chat_data" style="max-width: 100%; max-height: 400px; overflow: auto;">
+                <div class="ui comments scrolling content" id="chat_data">
                     <div class="comment">
                       <a class="avatar">
-                        <img src="/images/avatar/small/joe.jpg">
+                        <img src="https://joeschmoe.io/api/v1/joe">
                       </a>
                       <div class="content">
                         <a class="author">Tom Lukic</a>
@@ -97,27 +131,53 @@
                           This will be great for business reports. I will definitely download this.
                         </div>
                         <div class="actions">
-                          <a class="reply">Reply</a>
-                          <a class="save">Save</a>
-                          <a class="hide">Hide</a>
+                          <a>Created At</a>
                         </div>
                       </div>
                     </div>
                 </div>
 
-                <div class="ui bottom fluid action input">
-                    <input type="text" id="chat_message_inp" placeholder="Enter your message here....">
-                    <button class="ui icon button" id="send_message" onclick="SEND_SECRET_MESSAGE()">
-                        <i class="send icon"></i>
-                    </button>
+                
+                <div class="ui grid">
+                    <div class="thirteen wide column">
+                        <div class="ui bottom fluid action input">
+                            <input type="text" id="chat_message_inp" placeholder="Enter your message here....">
+                            <button class="ui icon button" id="send_message" onclick="SEND_SECRET_MESSAGE()">
+                                <i class="send icon"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="three wide column">
+                        <button class="ui button red" onclick="OPEN_DELETE_MODAL()"><i class="trash icon"></i> delete</button>
+                    </div>
                 </div>
-            
             </div>  
         </div>
     </div>
 
+    <!-- Delete modal -->
+    <div class="ui basic modal">
+        <div class="ui icon header">
+          <i class="trash icon"></i>
+          Delete Message
+        </div>
+        <div class="content">
+          <p>Are you sure, if you press 'yes' then in 3 minutes all chats will be deleted?</p>
+        </div>
+        <div class="actions">
+          <div class="ui red basic cancel inverted button">
+            <i class="remove icon"></i>
+            No
+          </div>
+          <a class="ui green inverted button" onclick="DELETE_CHAT()">
+            <i class="checkmark icon"></i>
+            Yes
+          </a>
+        </div>
+    </div>
+
     <!-- Login & Register Modal -->
-    <div class="ui modal">
+    <div class="ui auth modal">
         <div class="ui placeholder segment">
             <div class="ui two column very relaxed stackable grid">
                 <div class="column">
@@ -156,6 +216,43 @@
             </div>
         </div>
     </div>
+
+    <!-- BroadCast Modal -->
+    <div class="ui broadcast modal">
+        <div class="ui icon header">
+          Broadcast Messages
+        </div>
+        <div class="content">
+            <p>Broadcast message to multiple loved ones</p>
+            <hr>
+            <h4>Select Multiple online users</h4>
+            <div class="ui fluid selection multiple dropdown" id="multi_dropdown">
+                <input type="hidden" id="onlineuser">
+                <i class="dropdown icon"></i>
+                <div class="default text">Select User</div>
+                <div class="menu" id="online_user_list">
+                </div>
+            </div>
+            <br/>
+            <div class="ui form">
+                <div class="field">
+                    <label><h4>Enter Message</h4></label>
+                    <input type="text" id="broadcast_message" placeholder="Enter your message here...">
+                </div>
+            </div>
+        </div>
+        <div class="actions">
+          <div class="ui red cancel button">
+            <i class="remove icon"></i>
+            cancel
+          </div>
+          <a class="ui green button" onclick="BROADCAST_CHAT()">
+            <i class="podcast icon"></i> 
+            broadcast
+          </a>
+        </div>
+    </div>
+
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.27.0/moment.min.js"></script>

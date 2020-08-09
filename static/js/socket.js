@@ -10,8 +10,9 @@ $(document).ready(function(){
   SOCKET_CONNECT();
   var IS_AUTHENTICATED = sessionStorage.getItem("is_Authenticated");
   if (IS_AUTHENTICATED != 'true'){
-    $('.ui.modal').modal({ closable: false,  blurring: true }).modal('show');
+    $('.ui.auth.modal').modal({ closable: false,  blurring: true }).modal('show');
   }
+  OPEN_BROADCAST_MODAL();
 });
 
 function NOTIFICATION(TYPE, MESSAGE, POSITION){
@@ -47,6 +48,7 @@ function SOCKET_CONNECT(){
   
   socket.on('USER_ERROR', data => {
     $('#reload_list').addClass('loading');
+    $('#send_message').removeClass('loading');
     var SESSION_KEY = sessionStorage.getItem("session_key");
     if (SESSION_KEY === data.session_key){
       NOTIFICATION('error', data.message, 'topCenter');
@@ -74,7 +76,7 @@ function SOCKET_CONNECT(){
       return;
     }
     sessionStorage.clear();
-    $('.ui.modal').modal({ closable: false,  blurring: true }).modal('show');
+    $('.ui.auth.modal').modal({ closable: false,  blurring: true }).modal('show');
     location.reload();
   });
 
@@ -89,9 +91,19 @@ function SOCKET_CONNECT(){
   socket.on('NEW_CHAT_DATA', data => {
     var CURRENT_USER_DATA = JSON.parse(sessionStorage.getItem("user_data"));
     if (CURRENT_USER_DATA.full_name === data.sender.full_name){
-      UPDATE_SENDER_CHAT(data.chat_data, data.sender);
+      UPDATE_SENDER_CHAT(data.chat_data);
     } else if (CURRENT_USER_DATA.full_name === data.reciever.full_name){
-      UPDATE_RECIEVER_CHAT(data.chat_data, data.reciever);
+      UPDATE_RECIEVER_CHAT(data.chat_data);
+    }
+  });
+
+  socket.on('BROADCAST_SUCCESS', data => {
+    var SESSION_KEY = sessionStorage.getItem("session_key");
+    if (SESSION_KEY == data.session_key){
+      NOTIFICATION('success', data.message, 'topCenter');
+      $('#onlineuser').val('');
+      $('#broadcast_message').val('');
+      return;
     }
   });
 }
@@ -136,6 +148,7 @@ function REGISTER_FUNCTION(){
 // Map users to online list
 function ONLINE_LIST_USER(data){
   var CURRENT_USER_DATA = JSON.parse(sessionStorage.getItem("user_data"));
+  sessionStorage.setItem("online_users", JSON.stringify(data));
   $('#online_users').html('');
   $.each(data.filter(i => i.full_name !== CURRENT_USER_DATA.full_name), function (index, value) {
     $('#online_users').append(`
@@ -150,7 +163,7 @@ function ONLINE_LIST_USER(data){
     `);
   });
   $('#reload_list').removeClass('loading');
-  $('.ui.modal').modal({ closable: true,  blurring: true }).modal('hide');
+  $('.ui.auth.modal').modal({ closable: true,  blurring: true }).modal('hide');
 }
 
 function FETCH_CHAT_DATA(TARGET_NAME){
@@ -193,7 +206,7 @@ function SET_CHAT_DATA(CHAT_DATA, TARGET_USER){
         <div class="content">
           <div class="text">${value.message}</div>
           <div class="actions">
-            <a class="reply">${moment(value.created_at).fromNow()}</a>
+            <a><i class="clock outline icon"></i>${moment(value.created_at).fromNow()}</a>
           </div>
         </div>
       </div>
@@ -203,7 +216,6 @@ function SET_CHAT_DATA(CHAT_DATA, TARGET_USER){
   $('#chat_area').removeClass('blur_container');
   $('#blur_no_content').hide();
 }
-
 
 function SEND_SECRET_MESSAGE(){
   var INP_MESSAGE = $('#chat_message_inp').val();
@@ -221,11 +233,11 @@ function SEND_SECRET_MESSAGE(){
   'full_name': CURRENT_USER_DATA.full_name, 'target_user': TARGET_USER_DATA.full_name });
 }
 
-function UPDATE_RECIEVER_CHAT(CHAT_DATA, USER_DATA){
+function UPDATE_RECIEVER_CHAT(CHAT_DATA){
   $(`
     <div class="comment">
       <a class="avatar">
-        <img src="${CHAT_DATA.created_for.photo}">
+        <img src="${CHAT_DATA.created_by.photo}">
       </a>
       <div class="content">
         <div class="text">${CHAT_DATA.message}</div>
@@ -237,13 +249,13 @@ function UPDATE_RECIEVER_CHAT(CHAT_DATA, USER_DATA){
   `).appendTo($('#chat_data'));
 }
 
-function UPDATE_SENDER_CHAT(CHAT_DATA, USER_DATA){
+function UPDATE_SENDER_CHAT(CHAT_DATA){
   $('#chat_message_inp').val('');
 
   $(`
     <div class="comment chat_align">
       <a class="avatar">
-        <img src="${USER_DATA.photo}">
+        <img src="${CHAT_DATA.created_by.photo}">
       </a>
       <div class="content">
         <div class="text">${CHAT_DATA.message}</div>
@@ -255,4 +267,50 @@ function UPDATE_SENDER_CHAT(CHAT_DATA, USER_DATA){
   `).appendTo($('#chat_data'));
 
   $('#send_message').removeClass('loading');
+}
+
+function OPEN_BROADCAST_MODAL(){
+  $('#broadcast_button').on('click', function(){
+    $('#online_user_list').html('');
+    var CURRENT_USER_DATA = JSON.parse(sessionStorage.getItem("user_data"));
+    var ONLINE_USERS = JSON.parse(sessionStorage.getItem("online_users"));
+    $.each(ONLINE_USERS.filter(i => i.full_name !== CURRENT_USER_DATA.full_name), function (index, value) {
+      $('#online_user_list').append(`
+        <div class="item" data-value="${value.full_name}">
+          ${value.full_name}
+        </div>
+      `);
+    });
+    $('#multi_dropdown').dropdown();
+    $('.ui.broadcast.modal').modal('show');
+  });
+}
+
+function BROADCAST_CHAT(){
+  var INP_USERS = $('#onlineuser').val();
+  var INP_MESSAGE = $('#broadcast_message').val();
+  if (INP_MESSAGE === '' || INP_USERS === ''){
+    NOTIFICATION('error', 'Please input a message and select users!', 'topCenter');
+    return;
+  }
+  var SESSION_KEY = sessionStorage.getItem("session_key");
+  var CURRENT_USER_DATA = JSON.parse(sessionStorage.getItem("user_data"));
+  
+  socket.emit('BROADCAST_MESSAGE', { 'session_key': SESSION_KEY, 'users_list': INP_USERS, 
+    'full_name': CURRENT_USER_DATA.full_name, 'message': INP_MESSAGE });
+
+  $('.ui.broadcast.modal').modal('hide');
+}
+
+function OPEN_DELETE_MODAL(){
+  $('.ui.basic.modal').modal('show');
+}
+
+function DELETE_CHAT(){
+  var TARGET_USER_DATA = JSON.parse(sessionStorage.getItem("target_user_data"));
+  var CURRENT_USER_DATA = JSON.parse(sessionStorage.getItem("user_data"));
+  var SESSION_KEY = sessionStorage.getItem("session_key");
+
+  socket.emit('DELETE_MESSAGE', { 'session_key': SESSION_KEY, 'full_name': CURRENT_USER_DATA.full_name, 
+    'target_user': TARGET_USER_DATA.full_name });
 }

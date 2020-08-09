@@ -16,6 +16,13 @@
     margin-left: 18em;
 }
 
+#chat_data {
+    max-width: 100%; 
+    max-height: 250px; 
+    overflow: auto;
+    flex-direction: column-reverse;
+}
+
 .chat_align {
     margin-left: 40em !important;
 }

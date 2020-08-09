@@ -17,8 +17,8 @@ def GET_USER(TARGET_USER, CURRENT_USER):
 
 def CHAT_DATA(CURRENT_USER, TARGET_USER):
     from .models import CHAT_DATA
-    sent_by = CHAT_DATA.objects.filter(created_by=CURRENT_USER, created_for=TARGET_USER).all()
-    replied_by = CHAT_DATA.objects.filter(created_by=TARGET_USER, created_for=CURRENT_USER).all()
+    sent_by = CHAT_DATA.objects.filter(created_by=CURRENT_USER, created_for=TARGET_USER, is_active=True).all()
+    replied_by = CHAT_DATA.objects.filter(created_by=TARGET_USER, created_for=CURRENT_USER, is_active=True).all()
     result_list = sorted(chain(sent_by, replied_by), key=lambda instance: instance.created_at)
     return result_list
 
