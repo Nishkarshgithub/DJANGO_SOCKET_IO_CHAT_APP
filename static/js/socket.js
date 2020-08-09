@@ -29,7 +29,6 @@ function SOCKET_CONNECT(){
   
   socket.on('connection', data => {
     var SESSION_KEY = sessionStorage.getItem("session_key");
-    console.log(SESSION_KEY, typeof(SESSION_KEY));
     if (SESSION_KEY == 'null' || SESSION_KEY == null){
       sessionStorage.setItem('session_key', data.session_key);
       console.log('message: ' + data.message);
@@ -78,6 +77,23 @@ function SOCKET_CONNECT(){
     $('.ui.modal').modal({ closable: false,  blurring: true }).modal('show');
     location.reload();
   });
+
+  socket.on('USER_CHAT_DATA', data => {
+    var SESSION_KEY = sessionStorage.getItem("session_key");
+    if (SESSION_KEY != data.session_key){
+      return;
+    }
+    SET_CHAT_DATA(data.chat_data, data.target_user);
+  });
+
+  socket.on('NEW_CHAT_DATA', data => {
+    var CURRENT_USER_DATA = JSON.parse(sessionStorage.getItem("user_data"));
+    if (CURRENT_USER_DATA.full_name === data.sender.full_name){
+      UPDATE_SENDER_CHAT(data.chat_data, data.sender);
+    } else if (CURRENT_USER_DATA.full_name === data.reciever.full_name){
+      UPDATE_RECIEVER_CHAT(data.chat_data, data.reciever);
+    }
+  });
 }
 
 // Login Function
@@ -124,10 +140,12 @@ function ONLINE_LIST_USER(data){
   $.each(data.filter(i => i.full_name !== CURRENT_USER_DATA.full_name), function (index, value) {
     $('#online_users').append(`
       <div class="item" key='${index}'>
-        <img class="ui avatar image" src="${value.photo}">
-        <div class="content">
-          <div class="header">${value.full_name}</div>
-        </div>
+          <img class="ui avatar image" src="${value.photo}">
+          <div class="content">
+            <a href='#' onclick='FETCH_CHAT_DATA("${value.full_name}")'> 
+              <div class="header">${value.full_name}</div>
+            </a>
+          </div>
       </div>
     `);
   });
@@ -135,6 +153,11 @@ function ONLINE_LIST_USER(data){
   $('.ui.modal').modal({ closable: true,  blurring: true }).modal('hide');
 }
 
+function FETCH_CHAT_DATA(TARGET_NAME){
+  var CURRENT_USER_DATA = JSON.parse(sessionStorage.getItem("user_data"));
+  var SESSION_KEY = sessionStorage.getItem("session_key");
+  socket.emit('FETCH_CHAT_DATA', { 'session_key': SESSION_KEY, 'full_name': CURRENT_USER_DATA.full_name, 'target_name': TARGET_NAME });
+}
 
 function RELOAD_ONLINE_USERLIST(){
   $('#reload_list').addClass('loading');
@@ -143,126 +166,93 @@ function RELOAD_ONLINE_USERLIST(){
   socket.emit('USER_LIST', { 'session_key': SESSION_KEY, 'full_name': CURRENT_USER_DATA.full_name });
 }
 
-// socket.on('USER_DATA', userdata => {
-//   $('#active_user_data').html('');
-//   SHOW_USERS(userdata);
-// });
+function SET_CHAT_DATA(CHAT_DATA, TARGET_USER){
+  $('#chat_data').html('');
+  sessionStorage.setItem("target_user_data", JSON.stringify(TARGET_USER));
 
-// socket.on('MESSAGES_LIST', message => {
-//   $('.chat_message').html('');
-//   SHOW_MESSAGES(message);
-// });
+  $('#chat_user_data').html(`
+    <div class="item">
+      <a class="ui tiny circular image">
+        <img src="${TARGET_USER.photo}">
+      </a>
+      <div class="middle aligned content">
+        <div class="header">
+          <i class="yellow circle icon"></i>
+          ${TARGET_USER.full_name}
+        </div>
+      </div>
+    </div>
+  `);
 
-// function USER_DATA_HANDLER(){
-//   socket.on('USER_ERROR', data => {
-//     $('#error_value').text(data);
-//     $('#name_error').show();
-//   });
+  $.each(CHAT_DATA, function (index, value) {
+    $('#chat_data').append(`
+      <div class="comment ${value.created_by.full_name === TARGET_USER.full_name ? '' : 'chat_align'}" key="${index}">
+        <a class="avatar">
+          <img src="${value.created_for.full_name === TARGET_USER.full_name || value.created_by.full_name === TARGET_USER.full_name ? value.created_by.photo : value.created_for.photo}">
+        </a>
+        <div class="content">
+          <div class="text">${value.message}</div>
+          <div class="actions">
+            <a class="reply">${moment(value.created_at).fromNow()}</a>
+          </div>
+        </div>
+      </div>
+    `);
+  });
 
-//   socket.on('NEW_USER_DATA', data => {
-//     var USER_DATA = JSON.parse(localStorage.getItem('user_data'));
-//     if (USER_DATA === null || USER_DATA.full_name === data.user_data['full_name']){
-//       localStorage.setItem("is_Authenticated", data.is_Authenticated);
-//       localStorage.setItem("user_data", JSON.stringify(data.user_data));
-//       HOME_INTIALISATION();
-//     }
-//   });
-// }
+  $('#chat_area').removeClass('blur_container');
+  $('#blur_no_content').hide();
+}
 
-// function HOME_INTIALISATION(){
-//   var USER_DATA = JSON.parse(localStorage.getItem('user_data'));
-//   var Authenticated = localStorage.getItem("is_Authenticated");
-//   if (USER_DATA === null || USER_DATA === undefined){
-//     socket.emit('LIST_USER', null);
-//   } else {
-//     socket.emit('LIST_USER', USER_DATA);
-//   }
-//   switch (Authenticated) {
-//     case 'true':
-//       $('#login_wrap').html(
-//         `<div class="form-group">
-//           <label for="chatter_name"><i class="fa fa-user fa-fw" aria-hidden="true"></i> <span id="username">${USER_DATA.full_name}</span></label>
-//         </div>`
-//       );
-//       break;
-//     case null:
-//       $('#login_wrap').html(
-//         `<div class="form-group">
-//           <input type="text" name="chatter_name" class="form-control" placeholder="Enter Your Name" id="chatter_name">
-//           <hr>
-//           <div id="name_error" style="display: none;">
-//             <span id="error_value"></span>
-//             <hr>
-//           </div>
-//           <button id="login" class="btn btn-sm" style="width: 100%;"><i class="fa fa-send fa-fw" aria-hidden="true"></i> <span>Start Chat</span></button>
-//         </div>`
-//       );
-//       break;
-//     default:
-//       break;
-//   }
-//   $('.content').addClass('blur_div');
-// }
 
-// function CREATE_USER(){
-//   $('#login').on('click', function(){
-//     var NAME = $('#chatter_name').val();
-//     if (NAME === '' || NAME === null){
-//       $('#error_value').text('Name cannot be null!');
-//       $('#name_error').show();
-//     } else {
-//       socket.emit('ADD_USER', NAME);
-//     }
-//   });
-// }
+function SEND_SECRET_MESSAGE(){
+  var INP_MESSAGE = $('#chat_message_inp').val();
+  if (INP_MESSAGE === ''){
+    NOTIFICATION('error', 'Please input a message!', 'topCenter');
+    return;
+  }
+  var TARGET_USER_DATA = JSON.parse(sessionStorage.getItem("target_user_data"));
+  var CURRENT_USER_DATA = JSON.parse(sessionStorage.getItem("user_data"));
+  var SESSION_KEY = sessionStorage.getItem("session_key");
 
-// function SHOW_USERS(data){
-//   $.each(data, function (index, value) {
-//     $('#active_user_data').append(`
-//       <li class="contact" key="${index}" onclick="LOAD_MESSAGES('${value.room_key}', '${value.full_name}')">
-//         <div class="wrap">
-//           <span class="contact-status ${value.is_logged ? 'online' : null}"></span>
-//           <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/User_font_awesome.svg/1200px-User_font_awesome.svg.png" />
-//           <div class="meta">
-//             <p class="">${value.full_name} ${value.is_logged ? ' - online' : ' - offline'}</p>
-//           </div>
-//         </div>
-//       </li>
-//     `);
-//   });
-// }
+  $('#send_message').addClass('loading');
 
-// function LOAD_MESSAGES(TARGET_ROOM_KEY, TARGET_NAME){
-//   $('.content').addClass('blur_div');
-//   $('#TARGET_USERNAME').text(TARGET_NAME);
-//   var USER_DATA = JSON.parse(localStorage.getItem('user_data'));
-//   $('#room_key').val(USER_DATA.room_key + TARGET_ROOM_KEY);
-//   socket.emit('FETCH_MESSAGES', {"ROOM_KEY": USER_DATA.room_key + TARGET_ROOM_KEY});
-// }
+  socket.emit('SEND_NEW_MESSAGE', { 'session_key': SESSION_KEY, 'message' : INP_MESSAGE,
+  'full_name': CURRENT_USER_DATA.full_name, 'target_user': TARGET_USER_DATA.full_name });
+}
 
-// function SHOW_MESSAGES(MESSAGE){
-//   $('#chat_message').html('');
-//   $.each(MESSAGE, function (index, value) {
-//     $('#chat_message').append(`
-//       <li class="${value.message_type}" key="${index}">
-//         <p>${value.message}</p>
-//       </li>
-//     `);
-//   });
-//   $('.content').removeClass('blur_div');
-// }
+function UPDATE_RECIEVER_CHAT(CHAT_DATA, USER_DATA){
+  $(`
+    <div class="comment">
+      <a class="avatar">
+        <img src="${CHAT_DATA.created_for.photo}">
+      </a>
+      <div class="content">
+        <div class="text">${CHAT_DATA.message}</div>
+        <div class="actions">
+          <a class="reply">${moment(CHAT_DATA.created_at).fromNow()}</a>
+        </div>
+      </div>
+    </div>
+  `).appendTo($('#chat_data'));
+}
 
-// function SUBMIT_MESSAGE(){
-//   $('#chat_submit').click(function() {
-//     MESSAGE = $(".message-input input").val();
-//     var TARGET_KEY = $('#room_key').val();
-//     socket.emit('SEND_MESSAGE', {"room_key": TARGET_KEY, "message": MESSAGE});
-//     if($.trim(MESSAGE) == '') {
-//       return false;
-//     }
-//     $('<li class="sent"><p>' + MESSAGE + '</p></li>').appendTo($('.messages ul'));
-//     $('.message-input input').val(null);
-//     $('.contact.active .preview').html('<span>You: </span>' + MESSAGE);
-//     $(".messages").animate({ scrollTop: $(document).height() }, "fast");
-//   });
-// }
+function UPDATE_SENDER_CHAT(CHAT_DATA, USER_DATA){
+  $('#chat_message_inp').val('');
+
+  $(`
+    <div class="comment chat_align">
+      <a class="avatar">
+        <img src="${USER_DATA.photo}">
+      </a>
+      <div class="content">
+        <div class="text">${CHAT_DATA.message}</div>
+        <div class="actions">
+          <a class="reply">${moment(CHAT_DATA.created_at).fromNow()}</a>
+        </div>
+      </div>
+    </div>
+  `).appendTo($('#chat_data'));
+
+  $('#send_message').removeClass('loading');
+}

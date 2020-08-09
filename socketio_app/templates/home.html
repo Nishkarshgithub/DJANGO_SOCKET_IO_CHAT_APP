@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Simple Chat | Socket IO</title>
+    <title>Django Chat | Socket IO</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#4680ff">
     <meta name="description" content="Simple Chat App using Django Channels and Socket io">
@@ -24,105 +24,143 @@
         gtag('config', 'UA-110170684-2');
     </script>
     <link href='//fonts.googleapis.com/css?family=Source+Sans+Pro:400,600,700,300' rel='stylesheet' type='text/css'>
-    <link href='//cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css' rel='stylesheet'>
-    <link href='//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.2/css/font-awesome.min.css' rel='stylesheet'>
-    <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/custom.css' %}"/>
+    <link href='//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.2/css/font-awesome.min.css'>
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css" />
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/noty/3.1.4/noty.css" />
+    <link rel="stylesheet" href="{% static 'css/main.css' %}"/>
+    <!-- <link rel="stylesheet" href="{% static 'css/custom.css' %}"/> -->
   </head>
   <body>
-    
-    <div id="frame">
-      <!-- Modal -->
-    <div class="modal fade" id="basicExampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-    aria-hidden="true">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            ...
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary">Save changes</button>
-          </div>
+    <div class="ui grid" style="padding: 10px; margin-left: 0">
+        <div class="four wide column">
+            <div class="ui raised very padded text segment">
+                <div>
+                    <h2 class="ui">Django Chat App</h2>
+                    <hr>
+                    <span class="inline field">
+                        <span id="username">Nishkarsh Gupta</span>
+                        <button onclick="LOGOUT_FUNCTION()" class="ui circular google plus icon button right floated" data-tooltip="Logout" data-position="right center">
+                            <i class="power off icon"></i>
+                        </button>
+                    </span>
+                </div>
+                <h4 class="ui header">Online Users list <a href="#" onclick="RELOAD_ONLINE_USERLIST()"><i class="sync alternate icon" id="reload_list"></i></a></h4>
+                <div class="ui middle aligned selection animated list" id="online_users">
+                    <div class="item">
+                      <img class="ui avatar image" src="https://joeschmoe.io/api/v1/helen">
+                      <div class="content">
+                        <div class="header">Helen</div>
+                      </div>
+                    </div>
+                    <div class="item">
+                      <img class="ui avatar image" src="https://joeschmoe.io/api/v1/christian">
+                      <div class="content">
+                        <div class="header">Christian</div>
+                      </div>
+                    </div>
+                    <div class="item">
+                      <img class="ui avatar image" src="https://joeschmoe.io/api/v1/daniel">
+                      <div class="content">
+                        <div class="header">Daniel</div>
+                      </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-      <div id="sidepanel">
-        <div id="profile">
-          <div id="login_wrap">
-            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#basicExampleModal">
-              Launch demo modal
-            </button>
-          </div>
-        </div>
-        <div id="contacts">
-          <ul id="active_user_data">
+        <div class="twelve wide column">
+            <div class="ui bottom attached" id="blur_no_content">
+                <h2>Please select any online friend to start chat.</h2>
+            </div>
+            <div class="ui raised very padded text segment blur_container" id="chat_area">
+                <div class="ui items" id="chat_user_data">
+                    <div class="item">
+                        <a class="ui tiny circular image">
+                          <img src="https://joeschmoe.io/api/v1/jane">
+                        </a>
+                        <div class="middle aligned content">
+                          <div class="header">
+                            <i class="yellow circle icon"></i>
+                            Veronika Ossi
+                          </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="ui comments scrolling content" id="chat_data" style="max-width: 100%; max-height: 400px; overflow: auto;">
+                    <div class="comment">
+                      <a class="avatar">
+                        <img src="/images/avatar/small/joe.jpg">
+                      </a>
+                      <div class="content">
+                        <a class="author">Tom Lukic</a>
+                        <div class="text">
+                          This will be great for business reports. I will definitely download this.
+                        </div>
+                        <div class="actions">
+                          <a class="reply">Reply</a>
+                          <a class="save">Save</a>
+                          <a class="hide">Hide</a>
+                        </div>
+                      </div>
+                    </div>
+                </div>
 
-          </ul>
+                <div class="ui bottom fluid action input">
+                    <input type="text" id="chat_message_inp" placeholder="Enter your message here....">
+                    <button class="ui icon button" id="send_message" onclick="SEND_SECRET_MESSAGE()">
+                        <i class="send icon"></i>
+                    </button>
+                </div>
+            
+            </div>  
         </div>
-        <div id="bottom-bar">
-          <button id="broadcast" onclick="CREATE_ROOM()" style="width: 100%;"><i class="fa fa-bullhorn fa-fw" aria-hidden="true"></i> <span>Broadcast</span></button>
-        </div>
-      </div>
-      <div class="content">
-        <div class="contact-profile">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/User_font_awesome.svg/1200px-User_font_awesome.svg.png"/>
-          <p id='TARGET_USERNAME'></p>
-        </div>
-        <div class="messages" style="width: 100%;">
-          <ul id="chat_message">
-            <li class="sent">
-              <img src="http://emilcarlsson.se/assets/mikeross.png" alt="" />
-              <p>How the hell am I supposed to get a jury to believe you when I am not even sure that I do?!</p>
-            </li>
-            <li class="replies">
-              <img src="http://emilcarlsson.se/assets/harveyspecter.png" alt="" />
-              <p>When you're backed against the wall, break the god damn thing down.</p>
-            </li>
-            <li class="replies">
-              <img src="http://emilcarlsson.se/assets/harveyspecter.png" alt="" />
-              <p>Excuses don't win championships.</p>
-            </li>
-            <li class="sent">
-              <img src="http://emilcarlsson.se/assets/mikeross.png" alt="" />
-              <p>Oh yeah, did Michael Jordan tell you that?</p>
-            </li>
-            <li class="replies">
-              <img src="http://emilcarlsson.se/assets/harveyspecter.png" alt="" />
-              <p>No, I told him that.</p>
-            </li>
-            <li class="replies">
-              <img src="http://emilcarlsson.se/assets/harveyspecter.png" alt="" />
-              <p>What are your choices when someone puts a gun to your head?</p>
-            </li>
-            <li class="sent">
-              <img src="http://emilcarlsson.se/assets/mikeross.png" alt="" />
-              <p>What are you talking about? You do what they say or they shoot you.</p>
-            </li>
-            <li class="replies">
-              <img src="http://emilcarlsson.se/assets/harveyspecter.png" alt="" />
-              <p>Wrong. You take the gun, or you pull out a bigger one. Or, you call their bluff. Or, you do any one of a hundred and forty six other things.</p>
-            </li>
-          </ul>
-        </div>
-        <div class="message-input">
-          <div class="wrap">
-          <input type="text" placeholder="Write your message..." style="width: 90%"/>
-          <input type="hidden" id="room_key"/>
-          <button class="submit" id="chat_submit"><i class="fa fa-paper-plane" aria-hidden="true"></i></button>
-          </div>
-        </div>
-      </div>
     </div>
-    <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+    <!-- Login & Register Modal -->
+    <div class="ui modal">
+        <div class="ui placeholder segment">
+            <div class="ui two column very relaxed stackable grid">
+                <div class="column">
+                    <div class="ui form">
+                        <div class="field">
+                            <label>LOGIN USING YOUR NAME</label>
+                            <div class="ui left icon input">
+                                <input id="login_username" type="text" placeholder="Please enter your name.">
+                                <i class="user icon"></i>
+                            </div>
+                            <div class="ui pointing red basic label" id="log_inp_errval" style="display: none;">
+                                That name is taken!
+                            </div>
+                        </div>
+                        <button class="ui blue button" id="login_btn" onclick="LOGIN_FUNCTION()">Login</button>
+                    </div>
+                </div>
+                <div class="middle aligned column">
+                    <div class="ui form">
+                        <div class="field">
+                            <label>REGISTER USING YOUR NAME</label>
+                            <div class="ui left icon input">
+                                <input type="text" id="register_username" placeholder="Please enter your name.">
+                                <i class="user icon"></i>
+                            </div>
+                            <div class="ui pointing red basic label" id="reg_inp_errval" style="display: none;">
+                                That name is taken!
+                            </div>
+                        </div>
+                        <button class="ui green button" id="register_btn" onclick="REGISTER_FUNCTION()">Register</button>
+                    </div>
+                </div>
+            </div>
+            <div class="ui vertical divider">
+              Or
+            </div>
+        </div>
+    </div>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.27.0/moment.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/noty/3.1.4/noty.js"></script>
     <script src="{% static 'js/socket.js' %}"></script>
     <script src="{% static 'js/main.js' %}"></script>
   </body>

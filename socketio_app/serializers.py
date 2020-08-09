@@ -9,6 +9,9 @@ class USER_DATA_SERIALIZER(serializers.ModelSerializer):
 
 
 class CHAT_DATA_SERIALIZER(serializers.ModelSerializer):
+    created_by = USER_DATA_SERIALIZER(required=False)
+    created_for = USER_DATA_SERIALIZER(required=False)
+
     class Meta:
         model = CHAT_DATA
         fields = "__all__"

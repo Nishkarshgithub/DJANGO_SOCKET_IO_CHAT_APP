@@ -1,5 +1,5 @@
-import random
-import string
+import random, string
+from itertools import chain
 
 def RANDOM_STRING(length):
     letters = string.ascii_lowercase
@@ -9,8 +9,23 @@ def RANDOM_STRING(length):
 def RANDOM_PHOTO(NAME):
     return 'https://joeschmoe.io/api/v1/' + NAME
 
-def GET_USER(ROOMKEY):
+def GET_USER(TARGET_USER, CURRENT_USER):
     from .models import User
-    created_by = User.objects.filter(room_key=ROOMKEY[0:8]).first()
-    created_for = User.objects.filter(room_key=ROOMKEY[8:16]).first()
+    created_for = User.objects.filter(full_name=TARGET_USER).first()
+    created_by = User.objects.filter(full_name=CURRENT_USER).first()
     return created_by, created_for
+
+def CHAT_DATA(CURRENT_USER, TARGET_USER):
+    from .models import CHAT_DATA
+    sent_by = CHAT_DATA.objects.filter(created_by=CURRENT_USER, created_for=TARGET_USER).all()
+    replied_by = CHAT_DATA.objects.filter(created_by=TARGET_USER, created_for=CURRENT_USER).all()
+    result_list = sorted(chain(sent_by, replied_by), key=lambda instance: instance.created_at)
+    return result_list
+
+def NEW_CHAT_CREATE(CURRENT_USER, TARGET_USER, MESSAGE):
+    from .models import CHAT_DATA
+    chat_data = CHAT_DATA.objects.create(created_by=CURRENT_USER, created_for=TARGET_USER, 
+        message=MESSAGE, message_type='sent')
+    chat_data.save()
+    return chat_data
+
